@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Curly Adventure</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="game">
+      <h1>Curly Adventure</h1>
+      <div id="output" aria-live="polite" aria-label="Game output"></div>
+      <form id="input-form" autocomplete="off">
+        <span class="prompt" aria-hidden="true">&gt;</span>
+        <input
+          type="text"
+          id="command-input"
+          aria-label="Enter command"
+          placeholder="Enter command…"
+          autofocus
+        />
+        <button type="submit">Enter</button>
+      </form>
+    </div>
+    <script src="bundle.js"></script>
+  </body>
+</html>
