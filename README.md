@@ -1,6 +1,6 @@
 # curly-adventure
 
-A text-based adventure game scaffolding written in TypeScript. No theme or real content yet — just generic placeholder rooms, items, and a working command parser.
+A text-based adventure game scaffolding written in TypeScript. No theme or real content yet — just generic placeholder rooms, items, and a working command parser. Foo.
 
 ## Project structure
 
