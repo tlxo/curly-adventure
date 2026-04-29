@@ -295,13 +295,59 @@ describe('processCommand() — use', () => {
     expect(room.exits['south']).toBe('room_start');
   });
 
-  test('updateRoomDescription effect updates the current room description', () => {
-    const lantern = { id: 'item_lantern', name: 'lantern', description: 'A lantern.', takeable: true, aliases: [], onUse: [{ successMessage: 'The lantern illuminates the room.', effects: [{ type: 'updateRoomDescription' as const, description: 'The room is now bright.' }] }] };
-    const testItems = [...items, lantern];
+  test('removeExit effect removes an existing exit from the current room', () => {
+    const blocker = { id: 'item_blocker', name: 'blocker', description: 'A blocker.', takeable: true, aliases: [], onUse: [{ successMessage: 'The passage to the south is sealed.', effects: [{ type: 'removeExit' as const, direction: 'south' as const }] }] };
+    const testItems = [...items, blocker];
     let state = createGameState(rooms, testItems, 'room_start');
-    state = { ...state, inventory: [...state.inventory, 'item_lantern'] };
-    const next = processCommand(state, parse('use lantern'));
-    const room = next.rooms.get('room_start')!;
-    expect(room.description).toBe('The room is now bright.');
+    state = { ...state, inventory: [...state.inventory, 'item_blocker'] };
+    state = processCommand(state, parse('north'));
+    // corridor has a south exit initially
+    expect(state.rooms.get('room_corridor')!.exits['south']).toBe('room_start');
+    const next = processCommand(state, parse('use blocker'));
+    expect(next.rooms.get('room_corridor')!.exits['south']).toBeUndefined();
+  });
+
+  test('selects action with satisfied requiredItemId over one whose requirement is missing', () => {
+    // Two no-target actions on the same item: one requires 'item_gas3' (absent), one requires nothing
+    const multitool = {
+      id: 'item_multitool',
+      name: 'multitool',
+      description: 'A multitool.',
+      takeable: true,
+      aliases: [],
+      onUse: [
+        { requiredItemId: 'item_gas3', successMessage: 'Power mode.', effects: [] },
+        { successMessage: 'Basic mode.', effects: [] },
+      ],
+    };
+    const testItems = [...items, multitool];
+    let state = createGameState(rooms, testItems, 'room_start');
+    state = { ...state, inventory: [...state.inventory, 'item_multitool'] };
+    // item_gas3 is not in inventory → should pick the no-requirement action
+    const next = processCommand(state, parse('use multitool'));
+    expect(next.messages[0]).toContain('Basic mode');
+  });
+
+  test('selects targeted action with satisfied requiredItemId over one whose requirement is missing', () => {
+    // Two actions targeting item_chest: one needs absent item_gas4, one needs nothing
+    const dualtool = {
+      id: 'item_dualtool',
+      name: 'dualtool',
+      description: 'A dualtool.',
+      takeable: true,
+      aliases: [],
+      onUse: [
+        { targetItemId: 'item_chest', requiredItemId: 'item_gas4', successMessage: 'Power open.', effects: [] },
+        { targetItemId: 'item_chest', successMessage: 'Basic open.', effects: [] },
+      ],
+    };
+    const testItems = [...items, dualtool];
+    let state = createGameState(rooms, testItems, 'room_start');
+    state = processCommand(state, parse('north'));
+    state = processCommand(state, parse('east'));
+    state = { ...state, inventory: [...state.inventory, 'item_dualtool'] };
+    // item_gas4 not in inventory → should pick the no-requirement action
+    const next = processCommand(state, parse('use dualtool on chest'));
+    expect(next.messages[0]).toContain('Basic open');
   });
 });

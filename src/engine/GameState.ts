@@ -210,15 +210,23 @@ function handleUse(state: GameState, args: string[]): GameState {
     const targetId = findItemInList(state, targetItemIds, targetName);
     if (!targetId) return { ...state, messages: [`You don't see a ${targetName} here.`] };
     targetItem = state.items.get(targetId);
-    action = item.onUse.find((a) => a.targetItemId === targetId);
-    if (!action) {
+    const matchingActions = item.onUse.filter((a) => a.targetItemId === targetId);
+    if (matchingActions.length === 0) {
       return { ...state, messages: [`You can't use the ${item.name} on the ${targetItem?.name ?? targetName}.`] };
     }
+    // Prefer an action whose required item is already in inventory
+    action =
+      matchingActions.find((a) => !a.requiredItemId || state.inventory.includes(a.requiredItemId)) ??
+      matchingActions[0];
   } else {
-    action = item.onUse.find((a) => !a.targetItemId);
-    if (!action) {
+    const matchingActions = item.onUse.filter((a) => !a.targetItemId);
+    if (matchingActions.length === 0) {
       return { ...state, messages: [`You can't use the ${item.name} like that.`] };
     }
+    // Prefer an action whose required item is already in inventory
+    action =
+      matchingActions.find((a) => !a.requiredItemId || state.inventory.includes(a.requiredItemId)) ??
+      matchingActions[0];
   }
 
   // Check required item
@@ -245,12 +253,12 @@ function handleUse(state: GameState, args: string[]): GameState {
 
   // Consume self (remove item being used)
   if (action.consumesSelf) {
-    newState = removeItemFromEverywhere(newState, itemId);
+    newState = removeItemFromCurrentRoomAndInventory(newState, itemId);
   }
 
   // Consume required item
   if (action.consumesRequired && action.requiredItemId) {
-    newState = removeItemFromEverywhere(newState, action.requiredItemId);
+    newState = removeItemFromCurrentRoomAndInventory(newState, action.requiredItemId);
   }
 
   return { ...newState, messages: [action.successMessage] };
@@ -298,10 +306,14 @@ function applyUseEffect(state: GameState, effect: UseEffect): GameState {
       updatedRooms.set(room.id, updatedRoom);
       return { ...state, rooms: updatedRooms };
     }
+    default: {
+      const _exhaustiveCheck: never = effect;
+      return _exhaustiveCheck;
+    }
   }
 }
 
-function removeItemFromEverywhere(state: GameState, itemId: string): GameState {
+function removeItemFromCurrentRoomAndInventory(state: GameState, itemId: string): GameState {
   const room = state.rooms.get(state.currentRoomId);
   if (!room) return state;
   const updatedRoom: Room = { ...room, items: room.items.filter((id) => id !== itemId) };
