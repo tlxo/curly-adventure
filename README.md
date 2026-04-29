@@ -79,9 +79,10 @@ Netlify will run the build and serve the `public/` directory as a static site.
 | `look` | `l` | Describe the current room |
 | `look at <item>` | | Look at a specific item |
 | `go <direction>` | `n s e w u d` | Move in a direction |
-| `take <item>` | `get`, `pick up` | Pick up an item |
-| `drop <item>` | | Drop a carried item |
-| `inventory` | `i` | List carried items |
-| `examine <item>` | `x`, `ex` | Examine an item closely |
+| `take <item>` | `get`, `pick` | Pick up an item |
+| `drop <item>` | `put` | Drop a carried item |
+| `inventory` | `inv`, `i` | List carried items |
+| `examine <item>` | `x`, `ex`, `inspect` | Examine an item closely |
+| `use <item>` | | Use an item |
 | `help` | `?` | Show command reference |
-| `quit` | `q` | Quit the game |
+| `quit` | `exit`, `q` | Quit the game |
