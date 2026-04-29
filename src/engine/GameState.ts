@@ -94,8 +94,10 @@ function handleGo(state: GameState, args: string[]): GameState {
 function handleTake(state: GameState, args: string[]): GameState {
   if (args.length === 0) return { ...state, messages: ['Take what?'] };
 
-  // Support "pick up <item>"
+  // Support "pick up <item>": strip the preposition "up" from args
   const target = args.filter((a) => a !== 'up').join(' ');
+  if (!target) return { ...state, messages: ['Take what?'] };
+
   const room = state.rooms.get(state.currentRoomId);
   if (!room) return { ...state, messages: ['Error: current room not found.'] };
 

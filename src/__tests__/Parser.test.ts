@@ -130,7 +130,7 @@ describe('parse()', () => {
       expect(parse('  look  ')).toEqual({ type: 'look', args: [], raw: 'look' });
     });
 
-    test('input is lowercased', () => {
+    test('parsing is case-insensitive and preserves raw input', () => {
       expect(parse('LOOK')).toEqual({ type: 'look', args: [], raw: 'LOOK' });
     });
   });
