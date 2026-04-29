@@ -185,7 +185,7 @@ describe('processCommand() — use', () => {
 
   test('using an item not in inventory or room returns an error', () => {
     const next = processCommand(makeState(), parse('use dragon'));
-    expect(next.messages[0]).toContain("don't have");
+    expect(next.messages[0]).toContain("don't see");
   });
 
   test('using an item with no onUse definition returns an error', () => {
@@ -293,6 +293,16 @@ describe('processCommand() — use', () => {
     const next = processCommand(state, parse('use lamp'));
     const room = next.rooms.get('room_end')!;
     expect(room.exits['south']).toBe('room_start');
+  });
+
+  test('updateRoomDescription effect updates the current room description', () => {
+    const lantern = { id: 'item_lantern', name: 'lantern', description: 'A lantern.', takeable: true, aliases: [], onUse: [{ successMessage: 'The lantern illuminates the room.', effects: [{ type: 'updateRoomDescription' as const, description: 'The room is now bright.' }] }] };
+    const testItems = [...items, lantern];
+    let state = createGameState(rooms, testItems, 'room_start');
+    state = { ...state, inventory: [...state.inventory, 'item_lantern'] };
+    const next = processCommand(state, parse('use lantern'));
+    const room = next.rooms.get('room_start')!;
+    expect(room.description).toBe('The room is now bright.');
   });
 
   test('removeExit effect removes an existing exit from the current room', () => {
