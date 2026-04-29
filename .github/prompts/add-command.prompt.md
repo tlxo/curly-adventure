@@ -24,3 +24,4 @@ The agent must:
 4. Add or update unit tests in `src/__tests__/Parser.test.ts` and/or `GameState.test.ts`.
 5. Add the verb to the `help` output so players can discover it.
 6. Ensure all player-facing text matches the tone of voice.
+7. Update the `## Supported commands` table in `README.md` — add a row for the new command with its verb, aliases, and a short description.
