@@ -182,13 +182,18 @@ function handleUse(state: GameState, args: string[]): GameState {
   const itemName = itemArgs.join(' ');
   if (!itemName) return { ...state, messages: ['Use what?'] };
 
+  // Detect "use X on" with a missing target
+  if (onIndex >= 0 && targetArgs.length === 0) {
+    return { ...state, messages: [`Use the ${itemName} on what?`] };
+  }
+
   const room = state.rooms.get(state.currentRoomId);
   if (!room) return { ...state, messages: ['Error: current room not found.'] };
 
   // Items can be used from inventory or from the current room
   const allItemIds = [...state.inventory, ...room.items];
   const itemId = findItemInList(state, allItemIds, itemName);
-  if (!itemId) return { ...state, messages: [`You don't have a ${itemName}.`] };
+  if (!itemId) return { ...state, messages: [`You don't see a ${itemName} here.`] };
 
   const item = state.items.get(itemId)!;
 
