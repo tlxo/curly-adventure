@@ -63,6 +63,18 @@ docker compose up --build
 
 Open [http://localhost:8080](http://localhost:8080) in your browser.
 
+### Live-reload during development
+
+The `public/` directory is mounted into the nginx container as a volume, so any rebuild is immediately served without restarting Docker.
+
+Run webpack in watch mode in one terminal:
+
+```bash
+npm run dev
+```
+
+Leave `docker compose up` running in another terminal. Every time webpack rebuilds `public/bundle.js` (on file save), nginx serves the updated bundle straight away.
+
 ## Deploying to Netlify
 
 Connect the repository to Netlify. The `netlify.toml` at the root configures:
