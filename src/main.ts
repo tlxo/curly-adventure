@@ -53,5 +53,5 @@ window.addEventListener('DOMContentLoaded', () => {
   for (const msg of state.messages) {
     appendOutput(msg);
   }
-  appendOutput('Type <strong>help</strong> for a list of commands.');
+  appendOutput('Type **help** for a list of commands.');
 });
