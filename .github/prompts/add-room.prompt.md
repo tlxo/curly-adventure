@@ -8,6 +8,7 @@ Add a new room to the game using the details below.
 ## Room details
 
 <!-- Fill in or describe to the agent: -->
+- **Room ID**: (must be unique and use the existing `room_` prefix convention, e.g. `room_dark_cellar`)
 - **Name**: 
 - **Description**: (follow [tone-of-voice](../instructions/tone-of-voice.instructions.md))
 - **Exits**: (e.g. north → `hallway`, east → `kitchen`)

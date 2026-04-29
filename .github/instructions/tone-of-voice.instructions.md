@@ -4,7 +4,17 @@ applyTo: ["src/data/**", "src/engine/**"]
 ---
 # Tone of Voice
 
-> **Status: TBA** — The game theme has not been defined yet. Fill in this file once the theme is chosen. The placeholders below show what to document.
+> **Status: TBA** — The final game theme has not been defined yet.
+> Until it is defined, treat the guidance in this file as an interim constraint:
+> keep player-facing text neutral, concise, and placeholder-style; do not introduce a strong narrative voice, setting-specific lore, genre assumptions, or named thematic elements unless they already exist in the surrounding source material.
+
+## Interim guidance
+
+- Use clear, literal wording for player-facing text.
+- Prefer generic descriptions over flavorful or world-specific embellishment.
+- Do not invent setting details, backstory, factions, historical references, or proper nouns.
+- Keep command feedback short, factual, and polite.
+- If a file already contains placeholder text, preserve that style instead of rewriting it into a new narrative voice.
 
 ## Theme
 
