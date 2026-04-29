@@ -176,3 +176,132 @@ describe('processCommand() — unknown', () => {
     expect(next.messages[0]).toContain("don't understand");
   });
 });
+
+describe('processCommand() — use', () => {
+  test('"use" without target returns an error', () => {
+    const next = processCommand(makeState(), parse('use'));
+    expect(next.messages[0]).toBe('Use what?');
+  });
+
+  test('using an item not in inventory or room returns an error', () => {
+    const next = processCommand(makeState(), parse('use dragon'));
+    expect(next.messages[0]).toContain("don't have");
+  });
+
+  test('using an item with no onUse definition returns an error', () => {
+    // coin has no onUse
+    let state = makeState();
+    // Go to the final room where the chest is, use key on it first to get coin
+    state = processCommand(state, parse('take key'));
+    state = processCommand(state, parse('north'));
+    state = processCommand(state, parse('east'));
+    state = processCommand(state, parse('use key on chest'));
+    // coin is now in the room; take it
+    state = processCommand(state, parse('take coin'));
+    const next = processCommand(state, parse('use coin'));
+    expect(next.messages[0]).toContain("can't use");
+  });
+
+  test('using key on chest adds coin to room and removes chest', () => {
+    let state = makeState();
+    state = processCommand(state, parse('take key'));
+    state = processCommand(state, parse('north'));
+    state = processCommand(state, parse('east'));
+    const next = processCommand(state, parse('use key on chest'));
+    const room = next.rooms.get('room_end')!;
+    expect(room.items).toContain('item_coin');
+    expect(room.items).not.toContain('item_chest');
+  });
+
+  test('using key on chest consumes the key', () => {
+    let state = makeState();
+    state = processCommand(state, parse('take key'));
+    state = processCommand(state, parse('north'));
+    state = processCommand(state, parse('east'));
+    const next = processCommand(state, parse('use key on chest'));
+    expect(next.inventory).not.toContain('item_key');
+  });
+
+  test('using key on wrong item returns an error', () => {
+    let state = makeState();
+    state = processCommand(state, parse('take key'));
+    const next = processCommand(state, parse('use key on key'));
+    expect(next.messages[0]).toContain("can't use");
+  });
+
+  test('using an item on a non-existent target returns an error', () => {
+    let state = makeState();
+    state = processCommand(state, parse('take key'));
+    const next = processCommand(state, parse('use key on dragon'));
+    expect(next.messages[0]).toContain("don't see");
+  });
+
+  test('torch charges are decremented on use', () => {
+    const torchItems = [...items, { id: 'item_torch_test', name: 'torch', description: 'A torch.', takeable: true, aliases: [], charges: 3, onUse: [{ successMessage: 'Lit.', effects: [] }] }];
+    let state = createGameState(rooms, torchItems, 'room_start');
+    // Manually add torch to inventory via a helper state
+    state = { ...state, inventory: [...state.inventory, 'item_torch_test'] };
+    state = processCommand(state, parse('use torch'));
+    expect(state.items.get('item_torch_test')!.charges).toBe(2);
+  });
+
+  test('using a depleted item returns an error', () => {
+    const depletedItems = [...items, { id: 'item_depleted', name: 'widget', description: 'A widget.', takeable: true, aliases: [], charges: 0, onUse: [{ successMessage: 'Done.', effects: [] }] }];
+    let state = createGameState(rooms, depletedItems, 'room_start');
+    state = { ...state, inventory: [...state.inventory, 'item_depleted'] };
+    const next = processCommand(state, parse('use widget'));
+    expect(next.messages[0]).toContain('no uses left');
+  });
+
+  test('using an item with a missing required item returns an error', () => {
+    const chainsaw = { id: 'item_chainsaw', name: 'chainsaw', description: 'A chainsaw.', takeable: true, aliases: [], onUse: [{ targetItemId: 'item_chest', requiredItemId: 'item_gas', successMessage: 'Revved.', effects: [] }] };
+    const gas = { id: 'item_gas', name: 'gas', description: 'A gas canister.', takeable: true, aliases: [] };
+    const testItems = [...items, chainsaw, gas];
+    let state = createGameState(rooms, testItems, 'room_start');
+    state = processCommand(state, parse('north'));
+    state = processCommand(state, parse('east'));
+    // Add chainsaw to inventory, chest is in room_end, no gas
+    state = { ...state, inventory: [...state.inventory, 'item_chainsaw'] };
+    const next = processCommand(state, parse('use chainsaw on chest'));
+    expect(next.messages[0]).toContain('need a gas');
+  });
+
+  test('using an item with a required item works when required item is present', () => {
+    const chainsaw = { id: 'item_chainsaw2', name: 'saw', description: 'A saw.', takeable: true, aliases: [], onUse: [{ targetItemId: 'item_chest', requiredItemId: 'item_gas2', successMessage: 'Revved successfully.', effects: [{ type: 'removeItem' as const, itemId: 'item_chest' }], consumesRequired: true }] };
+    const gas = { id: 'item_gas2', name: 'fuel', description: 'Fuel.', takeable: true, aliases: [] };
+    const testItems = [...items, chainsaw, gas];
+    let state = createGameState(rooms, testItems, 'room_start');
+    state = processCommand(state, parse('north'));
+    state = processCommand(state, parse('east'));
+    state = { ...state, inventory: [...state.inventory, 'item_chainsaw2', 'item_gas2'] };
+    const next = processCommand(state, parse('use saw on chest'));
+    expect(next.messages[0]).toContain('Revved successfully');
+    // Gas is consumed
+    expect(next.inventory).not.toContain('item_gas2');
+    // Chest removed from room
+    const room = next.rooms.get('room_end')!;
+    expect(room.items).not.toContain('item_chest');
+  });
+
+  test('addExit effect adds a new exit to the current room', () => {
+    const lamp = { id: 'item_lamp', name: 'lamp', description: 'A lamp.', takeable: true, aliases: [], onUse: [{ successMessage: 'Light floods the room, revealing a passage.', effects: [{ type: 'addExit' as const, direction: 'south' as const, roomId: 'room_start' }] }] };
+    const testItems = [...items, lamp];
+    let state = createGameState(rooms, testItems, 'room_start');
+    state = { ...state, inventory: [...state.inventory, 'item_lamp'] };
+    state = processCommand(state, parse('north'));
+    state = processCommand(state, parse('east'));
+    const next = processCommand(state, parse('use lamp'));
+    const room = next.rooms.get('room_end')!;
+    expect(room.exits['south']).toBe('room_start');
+  });
+
+  test('updateRoomDescription effect updates the current room description', () => {
+    const lantern = { id: 'item_lantern', name: 'lantern', description: 'A lantern.', takeable: true, aliases: [], onUse: [{ successMessage: 'The lantern illuminates the room.', effects: [{ type: 'updateRoomDescription' as const, description: 'The room is now bright.' }] }] };
+    const testItems = [...items, lantern];
+    let state = createGameState(rooms, testItems, 'room_start');
+    state = { ...state, inventory: [...state.inventory, 'item_lantern'] };
+    const next = processCommand(state, parse('use lantern'));
+    const room = next.rooms.get('room_start')!;
+    expect(room.description).toBe('The room is now bright.');
+  });
+});

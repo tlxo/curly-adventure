@@ -5,6 +5,7 @@ export type CommandType =
   | 'drop'
   | 'inventory'
   | 'examine'
+  | 'use'
   | 'help'
   | 'quit'
   | 'unknown';
@@ -78,6 +79,9 @@ export function parse(input: string): ParsedCommand {
     case 'x':
     case 'inspect':
       return { type: 'examine', args, raw };
+
+    case 'use':
+      return { type: 'use', args, raw };
 
     case 'help':
     case '?':

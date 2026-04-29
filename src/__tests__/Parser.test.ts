@@ -113,6 +113,20 @@ describe('parse()', () => {
     });
   });
 
+  describe('use', () => {
+    test('"use torch" → use with item args', () => {
+      expect(parse('use torch')).toEqual({ type: 'use', args: ['torch'], raw: 'use torch' });
+    });
+
+    test('"use key on chest" → use with item and target args', () => {
+      expect(parse('use key on chest')).toEqual({ type: 'use', args: ['key', 'on', 'chest'], raw: 'use key on chest' });
+    });
+
+    test('"use" alone → use with no args', () => {
+      expect(parse('use')).toEqual({ type: 'use', args: [], raw: 'use' });
+    });
+  });
+
   describe('unknown / edge cases', () => {
     test('unrecognised verb → unknown', () => {
       expect(parse('frobnicate')).toEqual({ type: 'unknown', args: [], raw: 'frobnicate' });

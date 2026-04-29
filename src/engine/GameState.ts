@@ -1,5 +1,5 @@
 import { Room } from '../types/Room';
-import { Item } from '../types/Item';
+import { Item, UseEffect, UseAction } from '../types/Item';
 import { ParsedCommand } from './Parser';
 
 export interface GameState {
@@ -40,6 +40,8 @@ export function processCommand(state: GameState, command: ParsedCommand): GameSt
       return handleInventory(next);
     case 'examine':
       return handleExamine(next, command.args);
+    case 'use':
+      return handleUse(next, command.args);
     case 'help':
       return handleHelp(next);
     case 'quit':
@@ -169,19 +171,164 @@ function handleExamine(state: GameState, args: string[]): GameState {
   return { ...state, messages: [`You don't see a ${target} here.`] };
 }
 
+function handleUse(state: GameState, args: string[]): GameState {
+  if (args.length === 0) return { ...state, messages: ['Use what?'] };
+
+  // Split args on the preposition "on": "use key on chest" → item="key", target="chest"
+  const onIndex = args.indexOf('on');
+  const itemArgs = onIndex >= 0 ? args.slice(0, onIndex) : args;
+  const targetArgs = onIndex >= 0 ? args.slice(onIndex + 1) : [];
+
+  const itemName = itemArgs.join(' ');
+  if (!itemName) return { ...state, messages: ['Use what?'] };
+
+  const room = state.rooms.get(state.currentRoomId);
+  if (!room) return { ...state, messages: ['Error: current room not found.'] };
+
+  // Items can be used from inventory or from the current room
+  const allItemIds = [...state.inventory, ...room.items];
+  const itemId = findItemInList(state, allItemIds, itemName);
+  if (!itemId) return { ...state, messages: [`You don't have a ${itemName}.`] };
+
+  const item = state.items.get(itemId)!;
+
+  if (!item.onUse || item.onUse.length === 0) {
+    return { ...state, messages: [`You can't use the ${item.name} like that.`] };
+  }
+
+  if (item.charges !== undefined && item.charges <= 0) {
+    return { ...state, messages: [`The ${item.name} has no uses left.`] };
+  }
+
+  // Find the matching UseAction
+  let action: UseAction | undefined;
+  let targetItem: Item | undefined;
+
+  if (targetArgs.length > 0) {
+    const targetName = targetArgs.join(' ');
+    const targetItemIds = [...room.items, ...state.inventory];
+    const targetId = findItemInList(state, targetItemIds, targetName);
+    if (!targetId) return { ...state, messages: [`You don't see a ${targetName} here.`] };
+    targetItem = state.items.get(targetId);
+    action = item.onUse.find((a) => a.targetItemId === targetId);
+    if (!action) {
+      return { ...state, messages: [`You can't use the ${item.name} on the ${targetItem?.name ?? targetName}.`] };
+    }
+  } else {
+    action = item.onUse.find((a) => !a.targetItemId);
+    if (!action) {
+      return { ...state, messages: [`You can't use the ${item.name} like that.`] };
+    }
+  }
+
+  // Check required item
+  if (action.requiredItemId) {
+    if (!state.inventory.includes(action.requiredItemId)) {
+      const reqItem = state.items.get(action.requiredItemId);
+      return { ...state, messages: [`You need a ${reqItem?.name ?? action.requiredItemId} to do that.`] };
+    }
+  }
+
+  // Apply effects
+  let newState: GameState = { ...state };
+  for (const effect of action.effects) {
+    newState = applyUseEffect(newState, effect);
+  }
+
+  // Decrement charges
+  if (item.charges !== undefined) {
+    const updatedItem: Item = { ...item, charges: item.charges - 1 };
+    const updatedItems = new Map(newState.items);
+    updatedItems.set(itemId, updatedItem);
+    newState = { ...newState, items: updatedItems };
+  }
+
+  // Consume self (remove item being used)
+  if (action.consumesSelf) {
+    newState = removeItemFromEverywhere(newState, itemId);
+  }
+
+  // Consume required item
+  if (action.consumesRequired && action.requiredItemId) {
+    newState = removeItemFromEverywhere(newState, action.requiredItemId);
+  }
+
+  return { ...newState, messages: [action.successMessage] };
+}
+
+function applyUseEffect(state: GameState, effect: UseEffect): GameState {
+  const room = state.rooms.get(state.currentRoomId);
+  if (!room) return state;
+
+  switch (effect.type) {
+    case 'addItemToRoom': {
+      if (room.items.includes(effect.itemId)) return state;
+      const updatedRoom: Room = { ...room, items: [...room.items, effect.itemId] };
+      const updatedRooms = new Map(state.rooms);
+      updatedRooms.set(room.id, updatedRoom);
+      return { ...state, rooms: updatedRooms };
+    }
+    case 'removeItem': {
+      const updatedRoom: Room = { ...room, items: room.items.filter((id) => id !== effect.itemId) };
+      const updatedRooms = new Map(state.rooms);
+      updatedRooms.set(room.id, updatedRoom);
+      return {
+        ...state,
+        rooms: updatedRooms,
+        inventory: state.inventory.filter((id) => id !== effect.itemId),
+      };
+    }
+    case 'addExit': {
+      const updatedRoom: Room = { ...room, exits: { ...room.exits, [effect.direction]: effect.roomId } };
+      const updatedRooms = new Map(state.rooms);
+      updatedRooms.set(room.id, updatedRoom);
+      return { ...state, rooms: updatedRooms };
+    }
+    case 'removeExit': {
+      const updatedExits = { ...room.exits };
+      delete updatedExits[effect.direction];
+      const updatedRoom: Room = { ...room, exits: updatedExits };
+      const updatedRooms = new Map(state.rooms);
+      updatedRooms.set(room.id, updatedRoom);
+      return { ...state, rooms: updatedRooms };
+    }
+    case 'updateRoomDescription': {
+      const updatedRoom: Room = { ...room, description: effect.description };
+      const updatedRooms = new Map(state.rooms);
+      updatedRooms.set(room.id, updatedRoom);
+      return { ...state, rooms: updatedRooms };
+    }
+  }
+}
+
+function removeItemFromEverywhere(state: GameState, itemId: string): GameState {
+  const room = state.rooms.get(state.currentRoomId);
+  if (!room) return state;
+  const updatedRoom: Room = { ...room, items: room.items.filter((id) => id !== itemId) };
+  const updatedRooms = new Map(state.rooms);
+  updatedRooms.set(room.id, updatedRoom);
+  return {
+    ...state,
+    rooms: updatedRooms,
+    inventory: state.inventory.filter((id) => id !== itemId),
+  };
+}
+
 function handleHelp(state: GameState): GameState {
   const msg = [
     'Available commands:',
-    '  look (l)           - Describe current room',
-    '  look at <item>     - Look at an item',
-    '  go <direction>     - Move (north/south/east/west/up/down)',
-    '  n/s/e/w/u/d        - Shorthand directions',
-    '  take <item>        - Pick up an item',
-    '  drop <item>        - Drop an item',
-    '  inventory (i)      - Show your inventory',
-    '  examine <item>     - Examine an item closely',
-    '  help (?)           - Show this help',
-    '  quit (q)           - Quit the game',
+    '  look (l)              - Describe current room',
+    '  look at <item>        - Look at an item',
+    '  go <direction>        - Move (north/south/east/west/up/down)',
+    '  n/s/e/w/u/d           - Shorthand directions',
+    '  take <item>           - Pick up an item',
+    '  drop <item>           - Drop an item',
+    '  inventory (i)         - Show your inventory',
+    '  examine <item>        - Examine an item closely',
+    '  use <item>            - Use an item',
+    '  use <item> on <item>  - Use an item on another item',
+    '  help (?)              - Show this help',
+    '  quit (q)              - Quit the game',
   ].join('\n');
   return { ...state, messages: [msg] };
 }
