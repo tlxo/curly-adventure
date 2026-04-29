@@ -84,5 +84,6 @@ Netlify will run the build and serve the `public/` directory as a static site.
 | `inventory` | `inv`, `i` | List carried items |
 | `examine <item>` | `x`, `ex`, `inspect` | Examine an item closely |
 | `use <item>` | | Use an item |
+| `use <item> on <item>` | | Use one item on another item |
 | `help` | `?` | Show command reference |
 | `quit` | `exit`, `q` | Quit the game |
