@@ -67,7 +67,7 @@ Re-run with `--build` any time the `Dockerfile` changes or after updating npm de
 
 ### Live-reload during development
 
-`public/bundle.js` is git-ignored, so you must build locally before starting Docker in dev mode. The `docker-compose.dev.yml` overlay mounts `./public` into the nginx container, so webpack rebuilds are served immediately without restarting Docker.
+`public/bundle.js` is git-ignored. The `docker-compose.dev.yml` overlay mounts `./public` into the nginx container, so webpack output is served immediately without restarting Docker. The first webpack build will create `public/bundle.js` once you start the workflow below; nginx will begin serving it as soon as it exists — no prior local build required.
 
 **Step 1** — start Docker with the dev overlay in one terminal:
 
