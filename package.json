@@ -6,11 +6,15 @@
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
+    "dev:refresh": "browser-sync start --proxy http://localhost:8080 --files 'public/**/*' --no-open --port 3000 --ui-port 3001",
+    "dev:docker": "concurrently -k -n webpack,browsersync \"npm:dev\" \"npm:dev:refresh\"",
     "lint": "tsc --noEmit",
     "test": "jest"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "browser-sync": "^3.0.4",
+    "concurrently": "^9.2.1",
     "jest": "^30.3.0",
     "ts-jest": "^29.1.4",
     "ts-loader": "^9.5.1",
