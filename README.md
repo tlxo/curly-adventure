@@ -2,7 +2,7 @@
 
 A text-based adventure game scaffolding written in TypeScript. No theme or real content yet — just generic placeholder rooms, items, and a working command parser.
 
-Pre-production build running at [https://curly-adventure.netlify.app/](https://curly-adventure.netlify.app/)
+The pre-production build is running at [https://curly-adventure.netlify.app/](https://curly-adventure.netlify.app/).
 [![Netlify Status](https://api.netlify.com/api/v1/badges/f6cbf486-1e89-4b58-ac83-d3e74fcc8f72/deploy-status)](https://app.netlify.com/projects/curly-adventure/deploys)
 
 ## Project structure
