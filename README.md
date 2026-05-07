@@ -69,23 +69,38 @@ Re-run with `--build` any time the `Dockerfile` changes or after updating npm de
 
 `public/bundle.js` is git-ignored, so you must build locally before starting Docker in dev mode. The `docker-compose.dev.yml` overlay mounts `./public` into the nginx container, so webpack rebuilds are served immediately without restarting Docker.
 
-**Step 1** — build (or start watching) in one terminal:
-
-```bash
-# one-off build
-npm run build
-
-# or watch mode — rebuilds bundle.js on every save
-npm run dev
-```
-
-**Step 2** — start the container with the dev overlay in another terminal:
+**Step 1** — start Docker with the dev overlay in one terminal:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up
 ```
 
-Every time webpack writes a new `public/bundle.js`, nginx serves it straight away. Use `--build` only when the `Dockerfile` or `package.json` dependencies change.
+**Step 2** — in another terminal, run the dev auto-refresh workflow:
+
+```bash
+npm run dev:docker
+```
+
+This command runs both:
+
+- webpack in watch mode (rebuilds `public/bundle.js` on save)
+- BrowserSync proxy with automatic browser reload
+
+Open [http://localhost:3000](http://localhost:3000) while developing. BrowserSync proxies the nginx container on `localhost:8080` and refreshes whenever files in `public/` change.
+
+If you only want rebuilds (without auto-refresh), use:
+
+```bash
+npm run dev
+```
+
+For a one-off build:
+
+```bash
+npm run build
+```
+
+Use Docker `--build` only when the `Dockerfile` or dependencies change.
 
 ## Deploying to Netlify
 
