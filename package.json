@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "Scaffolding for a text-based adventure game in TypeScript",
   "private": true,
+  "engines": {
+    "node": "^22.9.0",
+    "npm": "^11.21.1"
+  },
+  "packageManager": "npm@11.21.1",
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",

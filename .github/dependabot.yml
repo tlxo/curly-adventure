@@ -9,3 +9,27 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    groups:
+      testing-toolchain:
+        applies-to: version-updates
+        patterns:
+          - "jest"
+          - "@types/jest"
+          - "ts-jest"
+          - "typescript"
+        update-types:
+          - "minor"
+          - "patch"
+      bundler-toolchain:
+        applies-to: version-updates
+        patterns:
+          - "webpack"
+          - "webpack-cli"
+          - "ts-loader"
+        update-types:
+          - "minor"
+          - "patch"
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
