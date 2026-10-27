@@ -1,0 +1,28 @@
+name: Validate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm install --global npm@11.21.1
+      - run: npm ci
+      - run: npm ls --all
+      - run: npm run lint
+      - run: npm test -- --runInBand
+      - run: npm run build
+      - run: npm audit
+      - run: docker build --tag curly-adventure:ci .
