@@ -24,7 +24,7 @@ public/
 
 ### Prerequisites
 
-- Node.js 22.9+ within the 22.x release line (see `.nvmrc`; use `nvm use` if you use nvm)
+- Node.js 22.12+ within the 22.x release line (see `.nvmrc`; use `nvm use` if you use nvm)
 - npm 11.21.1 (`npm install --global npm@11.21.1`)
 
 ### Install dependencies
