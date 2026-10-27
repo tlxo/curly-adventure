@@ -24,14 +24,49 @@ public/
 
 ### Prerequisites
 
-- Node.js 20+
-- npm
+- Node.js 22.12+ within the 22.x release line (see `.nvmrc`; use `nvm use` if you use nvm)
+- npm 11.21.1 (`npm install --global npm@11.21.1`)
 
 ### Install dependencies
 
 ```bash
-npm install
+npm ci
 ```
+
+### Dependency maintenance
+
+Commit `package.json` and `package-lock.json` together after dependency changes.
+Use npm to regenerate the lockfile; do not edit resolved versions by hand or use
+`--force` / `--legacy-peer-deps` to bypass compatibility checks.
+
+TypeScript currently stays on 5.9, which works with the existing configuration
+and ts-jest's `>=4.3 <7` peer range. TypeScript 7 must wait for explicit support
+from ts-jest (or a separately validated transformer migration). Review compiler
+major updates together with the Jest transformer and webpack loader.
+
+For a blocked transitive update, use `npm audit`, `npm explain <package>`, and
+`npm ls <package> --all` to identify every installed copy and its parent constraints.
+Try compatible lockfile updates first (`npm audit fix` for advisory fixes), then
+upgrade the owning parent. Only consider a scoped override after validating
+compatibility, with an upstream tracking issue and a removal condition.
+
+The current lockfile retains `glob@10.5.0` under `babel-plugin-istanbul` →
+`test-exclude@7`. It is deprecated, but the refreshed tree reports no known
+vulnerabilities in `npm audit`. `test-exclude@8` uses glob 13, but its parent
+currently requires version 7; wait for a compatible upstream release rather
+than forcing a cross-major override. BrowserSync's affected transitive packages
+were patched within their existing ranges, so no replacement is needed.
+
+Dependabot groups testing and bundler patch/minor version updates separately;
+major updates remain individual changes for compatibility review. Security
+updates have their own group. Repository administrators should ensure Dependabot
+alerts and security updates are enabled in repository settings, and require the
+`validate` and dependency-review checks before merging.
+
+PR validation runs a clean install, peer-tree check, type-check, tests, production
+build, audit (including development dependencies), and Docker build. After changes
+to BrowserSync, also smoke-test the Docker proxy and automatic reload workflow below.
+Docker, Netlify, and PR validation all use Node.js 22.
 
 ### Run tests
 

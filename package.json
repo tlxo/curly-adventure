@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "description": "Scaffolding for a text-based adventure game in TypeScript",
   "private": true,
+  "engines": {
+    "node": "^22.12.0",
+    "npm": "^11.21.1"
+  },
+  "packageManager": "npm@11.21.1",
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
@@ -14,11 +19,11 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "browser-sync": "^3.0.4",
-    "concurrently": "^10.0.5",
+    "concurrently": "^10.0.6",
     "jest": "^30.5.0",
     "ts-jest": "^29.4.12",
     "ts-loader": "^9.6.2",
-    "typescript": "^7.0.2",
+    "typescript": "^5.9.3",
     "webpack": "^5.110.2",
     "webpack-cli": "^7.2.3"
   }
