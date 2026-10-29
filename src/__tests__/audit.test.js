@@ -21,16 +21,15 @@ function makeReport() {
       '@jest/core': vulnerability('@jest/core', ['jest-config']),
       'jest-cli': vulnerability('jest-cli', ['@jest/core', 'jest-config']),
       jest: vulnerability('jest', ['@jest/core', 'jest-cli']),
-      'ts-jest': vulnerability('ts-jest', ['jest']),
     },
     metadata: {
-      vulnerabilities: { info: 0, low: 6, moderate: 0, high: 0, critical: 0, total: 6 },
+      vulnerabilities: { info: 0, low: 5, moderate: 0, high: 0, critical: 0, total: 5 },
     },
   };
 }
 
 describe('temporary audit exception', () => {
-  test('accepts only the six findings attributable to the approved advisory', () => {
+  test('accepts only the five findings attributable to the approved advisory', () => {
     const report = makeReport();
     expect(evaluateAudit(report, 1, now)).toEqual(Object.keys(report.vulnerabilities));
   });
@@ -171,6 +170,6 @@ describe('temporary audit exception', () => {
   });
 
   test('accepts the approved report immediately before expiry', () => {
-    expect(evaluateAudit(makeReport(), 1, new Date('2026-11-27T23:59:59.999Z'))).toHaveLength(6);
+    expect(evaluateAudit(makeReport(), 1, new Date('2026-11-27T23:59:59.999Z'))).toHaveLength(5);
   });
 });

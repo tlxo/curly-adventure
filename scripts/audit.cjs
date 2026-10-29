@@ -3,7 +3,7 @@ const { spawnSync } = require('node:child_process');
 const advisoryUrl = 'https://github.com/advisories/GHSA-gcqx-w48m-w2h4';
 const expires = '2026-11-28T00:00:00.000Z';
 const allowedPackages = new Set([
-  'deepmerge', 'jest-config', '@jest/core', 'jest-cli', 'jest', 'ts-jest',
+  'deepmerge', 'jest-config', '@jest/core', 'jest-cli', 'jest',
 ]);
 const severities = ['info', 'low', 'moderate', 'high', 'critical'];
 
