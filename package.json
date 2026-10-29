@@ -9,6 +9,7 @@
   },
   "packageManager": "npm@11.21.1",
   "scripts": {
+    "audit": "node scripts/audit.cjs",
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
     "dev:refresh": "browser-sync start --proxy http://localhost:8080 --files 'public/**/*' --no-open --port 3000 --ui-port 3001",

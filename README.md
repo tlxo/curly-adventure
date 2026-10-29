@@ -51,11 +51,32 @@ upgrade the owning parent. Only consider a scoped override after validating
 compatibility, with an upstream tracking issue and a removal condition.
 
 The current lockfile retains `glob@10.5.0` under `babel-plugin-istanbul` →
-`test-exclude@7`. It is deprecated, but the refreshed tree reports no known
-vulnerabilities in `npm audit`. `test-exclude@8` uses glob 13, but its parent
+`test-exclude@7`. It is deprecated. `test-exclude@8` uses glob 13, but its parent
 currently requires version 7; wait for a compatible upstream release rather
 than forcing a cross-major override. BrowserSync's affected transitive packages
 were patched within their existing ranges, so no replacement is needed.
+
+#### Temporary audit exception
+
+Run `npm run audit` for the CI audit policy; `npm audit` remains available for
+the unfiltered report. The gate prints the full report and temporarily accepts
+only [GHSA-gcqx-w48m-w2h4](https://github.com/advisories/GHSA-gcqx-w48m-w2h4)
+in `deepmerge` and its attributable low-severity Jest dependency findings.
+All other advisories, increased severities, audit execution errors, malformed
+reports, and unresolved or cyclic dependency chains fail the gate.
+
+- **Owner:** repository maintainers; tracking: [PR #56](https://github.com/tlxo/curly-adventure/pull/56)
+  and the advisory above.
+- **Expiry:** 2026-11-28 at 00:00 UTC; the gate fails after expiry, even without findings.
+- **Rationale:** no patched deepmerge release was available when approved on
+  2026-10-29. Jest uses it to merge repository-controlled test configuration,
+  not browser gameplay input. This limits exposure but does not fix the issue.
+  The six findings share one underlying advisory. Jest 25 would break the
+  current ts-jest peer requirements; older deepmerge versions lose security guards.
+- **Removal:** upgrade to a compatible upstream fix, verify the full dependency
+  tree and clean raw audit, remove the exception/gate and its tests, and restore
+  CI to `npm audit`. Review upstream availability before expiry; do not extend
+  automatically or introduce a blanket severity threshold.
 
 Dependabot groups testing and bundler patch/minor version updates separately;
 major updates remain individual changes for compatibility review. Security
