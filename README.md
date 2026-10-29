@@ -39,18 +39,17 @@ Commit `package.json` and `package-lock.json` together after dependency changes.
 Use npm to regenerate the lockfile; do not edit resolved versions by hand or use
 `--force` / `--legacy-peer-deps` to bypass compatibility checks.
 
-TypeScript currently stays on 5.9. As of 2026-10-29, stable
-[ts-loader 9.6.2](https://github.com/TypeStrong/ts-loader/blob/main/CHANGELOG.md#962)
-does not explicitly document TypeScript 7 support; its unrestricted TypeScript
-peer range is not evidence of compatibility.
-[ts-loader 10 beta](https://github.com/TypeStrong/ts-loader/blob/next/CHANGELOG.md#1000-beta0)
-explicitly supports TypeScript 7.1+ through the native compiler API, not 7.0.
-Rather than adopt that beta, webpack uses `swc-loader` with the existing
-`@swc/core`; Jest uses `@swc/jest`. Neither transformer performs type-checking.
-Compiler-backed application and test checks remain separate and required by CI.
-Before changing compiler versions, validate both type-checks, Jest, production
-output, browser gameplay, and development/watch rebuilds; SWC does not guarantee
-support for every future TypeScript syntax feature.
+TypeScript is currently 7.0.2. Webpack transpiles through `swc-loader` and Jest
+through `@swc/jest`, both using the existing `@swc/core`; neither performs
+type-checking. Keep changes to the Jest transformer, webpack loader, and TypeScript
+compiler independently revertible rather than combining their upgrades into one
+change. Commit each dependency manifest update with its regenerated lockfile.
+
+Before upgrading any of these components, require a clean `npm ci`, a valid
+`npm ls --all` peer tree, both compiler-backed type-checks, unchanged Jest results,
+a production build, the dependency audit, and a Docker build. Also smoke-test
+browser gameplay and verify the development/watch rebuild and browser reload.
+SWC does not guarantee support for every future TypeScript syntax feature.
 
 For a blocked transitive update, use `npm audit`, `npm explain <package>`, and
 `npm ls <package> --all` to identify every installed copy and its parent constraints.
@@ -92,9 +91,10 @@ updates have their own group. Repository administrators should ensure Dependabot
 alerts and security updates are enabled in repository settings, and require the
 `validate` and dependency-review checks before merging.
 
-PR validation runs a clean install, peer-tree check, type-check, tests, production
-build, audit (including development dependencies), and Docker build. After changes
-to BrowserSync, also smoke-test the Docker proxy and automatic reload workflow below.
+PR validation runs a clean install, peer-tree check, both type-checks, tests,
+production build, audit (including development dependencies), and Docker build.
+After changes to TypeScript, either SWC integration, or BrowserSync, also smoke-test
+browser gameplay and the development/watch rebuild and reload workflow below.
 Docker, Netlify, and PR validation all use Node.js 22.
 
 ### Run tests
