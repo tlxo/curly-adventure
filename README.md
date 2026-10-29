@@ -80,6 +80,12 @@ npm test
 npm run lint
 ```
 
+This runs separate application and test type-checks, both required by CI.
+To run either check independently, use `npm run typecheck:app` or
+`npm run typecheck:tests`. The test configuration inherits the application's
+strict compiler options, includes test files and their imports, and emits no files.
+Test type-checking is independent of Jest's transformer.
+
 ### Build for the browser
 
 ```bash
