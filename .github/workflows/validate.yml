@@ -24,5 +24,5 @@ jobs:
       - run: npm run lint
       - run: npm test -- --runInBand
       - run: npm run build
-      - run: npm audit
+      - run: npm run audit
       - run: docker build --tag curly-adventure:ci .
