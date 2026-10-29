@@ -39,10 +39,18 @@ Commit `package.json` and `package-lock.json` together after dependency changes.
 Use npm to regenerate the lockfile; do not edit resolved versions by hand or use
 `--force` / `--legacy-peer-deps` to bypass compatibility checks.
 
-TypeScript currently stays on 5.9, which works with the existing configuration
-and ts-jest's `>=4.3 <7` peer range. TypeScript 7 must wait for explicit support
-from ts-jest (or a separately validated transformer migration). Review compiler
-major updates together with the Jest transformer and webpack loader.
+TypeScript currently stays on 5.9. As of 2026-10-29, stable
+[ts-loader 9.6.2](https://github.com/TypeStrong/ts-loader/blob/main/CHANGELOG.md#962)
+does not explicitly document TypeScript 7 support; its unrestricted TypeScript
+peer range is not evidence of compatibility.
+[ts-loader 10 beta](https://github.com/TypeStrong/ts-loader/blob/next/CHANGELOG.md#1000-beta0)
+explicitly supports TypeScript 7.1+ through the native compiler API, not 7.0.
+Rather than adopt that beta, webpack uses `swc-loader` with the existing
+`@swc/core`; Jest uses `@swc/jest`. Neither transformer performs type-checking.
+Compiler-backed application and test checks remain separate and required by CI.
+Before changing compiler versions, validate both type-checks, Jest, production
+output, browser gameplay, and development/watch rebuilds; SWC does not guarantee
+support for every future TypeScript syntax feature.
 
 For a blocked transitive update, use `npm audit`, `npm explain <package>`, and
 `npm ls <package> --all` to identify every installed copy and its parent constraints.
@@ -72,7 +80,7 @@ reports, and unresolved or cyclic dependency chains fail the gate.
   2026-10-29. Jest uses it to merge repository-controlled test configuration,
   not browser gameplay input. This limits exposure but does not fix the issue.
   The six findings share one underlying advisory. Jest 25 would break the
-  current ts-jest peer requirements; older deepmerge versions lose security guards.
+  current Jest setup; older deepmerge versions lose security guards.
 - **Removal:** upgrade to a compatible upstream fix, verify the full dependency
   tree and clean raw audit, remove the exception/gate and its tests, and restore
   CI to `npm audit`. Review upstream availability before expiry; do not extend
@@ -106,6 +114,7 @@ To run either check independently, use `npm run typecheck:app` or
 `npm run typecheck:tests`. The test configuration inherits the application's
 strict compiler options, includes test files and their imports, and emits no files.
 Test type-checking is independent of Jest's transformer.
+`isolatedModules` checks that the code is safe for SWC's per-file transpilation.
 
 ### Build for the browser
 
@@ -114,11 +123,20 @@ npm run build
 # outputs public/bundle.js
 ```
 
+Webpack transpiles with SWC using ES2020 and CommonJS intermediate modules,
+matching the application's compiler settings. It does not report semantic type
+errors: run `npm run lint` separately before accepting a build. Keep the SWC
+targets in webpack and Jest aligned with `tsconfig.json` when changing targets.
+
 ### Watch mode (rebuilds on save)
 
 ```bash
 npm run dev
 ```
+
+This watches and rebuilds the bundle without type-checking. For compiler
+diagnostics during development, run `npm run typecheck:app -- --watch` in another
+terminal.
 
 ## Running locally with Docker
 
