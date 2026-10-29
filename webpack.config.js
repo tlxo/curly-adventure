@@ -7,7 +7,16 @@ module.exports = {
     rules: [
       {
         test: /\.ts$/,
-        use: 'ts-loader',
+        use: {
+          loader: 'swc-loader',
+          options: {
+            jsc: {
+              parser: { syntax: 'typescript' },
+              target: 'es2020',
+            },
+            module: { type: 'commonjs' },
+          },
+        },
         exclude: /node_modules/,
       },
     ],

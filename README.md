@@ -39,10 +39,9 @@ Commit `package.json` and `package-lock.json` together after dependency changes.
 Use npm to regenerate the lockfile; do not edit resolved versions by hand or use
 `--force` / `--legacy-peer-deps` to bypass compatibility checks.
 
-TypeScript currently stays on 5.9, which works with the existing configuration
-and ts-jest's `>=4.3 <7` peer range. TypeScript 7 must wait for explicit support
-from ts-jest (or a separately validated transformer migration). Review compiler
-major updates together with the Jest transformer and webpack loader.
+TypeScript 7 type-checks application and test code independently of SWC, which
+transpiles TypeScript for Jest and webpack. Review compiler major updates together
+with both SWC integrations; transpilation alone does not check types.
 
 For a blocked transitive update, use `npm audit`, `npm explain <package>`, and
 `npm ls <package> --all` to identify every installed copy and its parent constraints.
@@ -119,6 +118,9 @@ npm run build
 ```bash
 npm run dev
 ```
+
+The production build type-checks the application before bundling. Watch mode runs
+the application type-checker alongside webpack, reporting type errors as files change.
 
 ## Running locally with Docker
 
